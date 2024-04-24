@@ -1,0 +1,44 @@
+
+
+from cozmo_fsm import *
+from cozmo.util import degrees, Pose
+import os
+import re
+import IntentClassifier
+
+classifier = IntentClassifier()
+
+class ComputePremise(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+
+    def start(self,event):
+        super().start(event)
+        world = robot.world.world_map.objects
+        print("world: ", world)
+
+        world_map_facts = [""]
+
+        premise = "\n".join(world_map_facts)
+
+        classifier.setPremise(premise)
+
+class Query(StateNode):
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        query = event.string
+        print("String: ", query)
+
+        response = classifer.classify(query)
+        print("Response from fsm: ", response)
+		
+
+class CozmoControl(StateMachineProgram):
+	$setup {
+		launcher: StateNode() =N=> ComputePremise() =C=> chat_loop
+		chat_loop: ComputePremise() =TM('.*')=> Query() =C=> chat_loop
+		
+	}

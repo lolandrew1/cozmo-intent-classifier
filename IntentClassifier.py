@@ -92,27 +92,8 @@ class IntentClassifier():
 
       """
 
-      self.premise = """
-        cube1 is visible.
-        cube1 orientation is upright.
-        cube1 position is (200.5, 11.3).
-        cube2 is not visible.
-        cube2 orientation is upright.
-        cube2 position is (150.5, 34.5).
-        cube3 is visible.
-        cube3 orientation is sideways.
-        cube3 position is (-50.5, 138.7).
-      """
-
     
+  def setPremise(self, premise):
+      self.premise = premise
 
-classifier = IntentClassifier()
-
-test_queries = [
-    "Get your butt over to 3"
-]
-
-for query in test_queries:
-    print("query: ", query, " response: ", classifier.classify(query))
-        
 		
