@@ -1,12 +1,14 @@
 
 
 from cozmo_fsm import *
-from cozmo.util import degrees, Pose
+from cozmo.util import degrees
 import os
 import re
-import IntentClassifier
+from IntentClassifier import IntentClassifier
 
 classifier = IntentClassifier()
+query = ""
+command_num = -1
 
 class ComputePremise(StateNode):
     def __init__(self, **kwargs):
@@ -14,14 +16,58 @@ class ComputePremise(StateNode):
 
     def start(self,event):
         super().start(event)
+ 
+        global query
+        query = event.string
+
         world = robot.world.world_map.objects
         print("world: ", world)
 
         world_map_facts = [""]
 
+        
+        for obj_key in world:
+            obj = world[obj_key]
+            
+            # visibility
+            try:
+                visibility = "visible" if obj.is_visible else "invisible"
+                visibility_str = f"{obj_key} is {visibility}"
+                world_map_facts.append(visibility_str)
+            except:
+                pass
+
+            # orientation
+            try:
+                orientation = obj.orientation
+                orientation_str = f"{obj_key} orientation is {orientation}"
+                world_map_facts.append(orientation_str)
+            except:
+                pass
+
+            # position
+            try:
+                x = obj.x
+                y = obj.y
+                pos_str = f"{obj_key} position is ({x}, {y})"
+                world_map_facts.append(pos_str)
+            except:
+                pass
+
+        # cozmo premise
+        cozX = robot.pose.position.x
+		cozY = robot.pose.position.y
+        cozmo_visible = "Cozmo is visible"
+        cozmo_position = f"Cozmo position is ({cozX}, {cozY})"
+        world_map_facts.append(cozmo_visible)
+        world_map_facts.append(cozmo_position)
+
         premise = "\n".join(world_map_facts)
 
+        print("premise: ", premise)
+
         classifier.setPremise(premise)
+        self.post_completion()
 
 class Query(StateNode):
 	def __init__(self, **kwargs):
@@ -29,16 +75,150 @@ class Query(StateNode):
 		
     def start(self, event=None):
         super().start(event)
-        query = event.string
-        print("String: ", query)
+        # set command_num
+        global command_num
 
-        response = classifer.classify(query)
-        print("Response from fsm: ", response)
+        command_num, info = classifier.classify(query)
+        
+        print("got the command num and info", command_num, info)
+        
+
+        self.post_completion()
+
+
+class Check1(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
 		
+    def start(self, event=None):
+        super().start(event)
+        print("checking 1")
+        if command_num == 1:
+            self.post_success()
+        else:
+            self.post_failure()
+
+class Check2(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        print("checking 2")
+        if command_num == 2:
+            self.post_success()
+        else:
+            self.post_failure()
+
+class Check3(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        print("checking 3")
+        if command_num == 3:
+            self.post_success()
+        else:
+            self.post_failure()
+
+class Check4(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        print("checking 4")
+        if command_num == 4:
+            self.post_success()
+        else:
+            self.post_failure()
+
+class Check5(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        print("checking 5")
+        if command_num == 5:
+            self.post_success()
+        else:
+            self.post_failure()
+		
+
+class Command1(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        print("1")
+        self.post_completion()
+
+class Command2(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        print("2")
+        self.post_completion()
+
+class Command3(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        print("3")
+        self.post_completion()
+
+class Command4(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        print("4")
+        self.post_completion()
+
+class Command5(StateNode):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        super().start(event)
+        print("5")
+        self.post_completion()
 
 class CozmoControl(StateMachineProgram):
+    def __init__(self):
+        super().__init__(speech=True, speech_debug=True)
+
 	$setup {
-		launcher: StateNode() =N=> ComputePremise() =C=> chat_loop
-		chat_loop: ComputePremise() =TM('.*')=> Query() =C=> chat_loop
-		
+        loop: StateNode()
+        loop =Hear('cozmo (.*)')=> ComputePremise() =C=> Query() =C=> execute1
+
+        execute1: Check1()
+        execute1 =S=> Command1() =C=> loop
+        execute1 =F=> execute2
+
+        execute2: Check2()
+        execute2 =S=> Command2() =C=> loop
+        execute2 =F=> execute3
+        
+        execute3: Check3()
+        execute3 =S=> Command3() =C=> loop
+        execute3 =F=> execute4
+
+        execute4: Check4()
+        execute4 =S=> Command4() =C=> loop
+        execute4 =F=> execute5
+
+        execute5: Check5()
+        execute5 =S=> Command5() =C=> loop
+        execute5 =F=> loop
 	}
+
+

@@ -41,7 +41,24 @@ class IntentClassifier():
       queries.append({"role": "user", "content": f"Q: {query}"})
       answers.append({"role": "assistant", "content": f"A: {cleaned_response}"})
 
-      return cleaned_response
+      response_lines = cleaned_response.split("\n")
+      print("response_line: ", response_lines)
+
+      try:
+        command_line = response_lines[1]
+        command_num = response_lines[1].split("-")[1]
+        info = response_lines[2].split("-")[1].split(",")
+
+        print("command_num: ", command_num)
+        print('info: ', info)
+        
+        return (int(command_num), info)
+      except:
+        print("response linsessssss: ", response_lines)
+        return(1, [3])
+
+     
+
           
 
   def setup(self):
@@ -85,9 +102,27 @@ class IntentClassifier():
       
       Some commands that you give me may not perfectly match one of the 5 commands that I can do, but I will match your
       command to the closest one. If you ask me a question that is complete nonsense, trickery, or has no clear answer,
-      I will respond with "Could you be more clear?". In addition to the command that I will match to, I will also tell you
-      the corresponding number to that command (1-5) and give you the necessary slot information which were donated by
-      "_" in the commands.
+      I will respond with "Could you be more clear?". 
+      
+      I will give you a reponse in this exact format:
+
+      Command-(the matched command) 
+      Number-(the corresponding number to the matched command (1-5)) 
+      Info-(slot information 1)-(slot information 2 (if necessary)) 
+      
+      The necessary slot information were donated by "_" in the commands.
+
+      For example, a response that may be return might look like: 
+      
+      Command-Go to Cube 3
+      Number-4
+      Info-3
+
+      If there are multiple information slots, the response might look like this:
+
+      Command-Turn 30 degrees to the right
+      Number-2
+      Info-30,right
 
 
       """
@@ -96,4 +131,4 @@ class IntentClassifier():
   def setPremise(self, premise):
       self.premise = premise
 
-		
+        
