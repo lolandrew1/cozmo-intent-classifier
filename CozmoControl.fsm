@@ -9,6 +9,7 @@ from IntentClassifier import IntentClassifier
 classifier = IntentClassifier()
 query = ""
 command_num = -1
+info = []
 
 class ComputePremise(StateNode):
     def __init__(self, **kwargs):
@@ -21,7 +22,6 @@ class ComputePremise(StateNode):
         query = event.string
 
         world = robot.world.world_map.objects
-        print("world: ", world)
 
         world_map_facts = [""]
 
@@ -64,8 +64,6 @@ class ComputePremise(StateNode):
 
         premise = "\n".join(world_map_facts)
 
-        print("premise: ", premise)
-
         classifier.setPremise(premise)
         self.post_completion()
 
@@ -76,7 +74,7 @@ class Query(StateNode):
     def start(self, event=None):
         super().start(event)
         # set command_num
-        global command_num
+        global command_num, info
 
         command_num, info = classifier.classify(query)
         
@@ -98,6 +96,7 @@ class Check1(StateNode):
         else:
             self.post_failure()
 
+
 class Check2(StateNode):
     def __init__(self, **kwargs):
 		super().__init__(**kwargs)
@@ -109,6 +108,7 @@ class Check2(StateNode):
             self.post_success()
         else:
             self.post_failure()
+            
 
 class Check3(StateNode):
     def __init__(self, **kwargs):
@@ -122,6 +122,7 @@ class Check3(StateNode):
         else:
             self.post_failure()
 
+
 class Check4(StateNode):
     def __init__(self, **kwargs):
 		super().__init__(**kwargs)
@@ -133,6 +134,7 @@ class Check4(StateNode):
             self.post_success()
         else:
             self.post_failure()
+
 
 class Check5(StateNode):
     def __init__(self, **kwargs):
@@ -147,50 +149,74 @@ class Check5(StateNode):
             self.post_failure()
 		
 
-class Command1(StateNode):
+# Move forward _ units
+class Command1(Forward):
     def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 		
     def start(self, event=None):
+        self.distance = distance_mm(int(info[0]))
+        self.speed = speed_mmps(50)
         super().start(event)
-        print("1")
-        self.post_completion()
 
-class Command2(StateNode):
-    def __init__(self, **kwargs):
-		super().__init__(**kwargs)
-		
-    def start(self, event=None):
-        super().start(event)
-        print("2")
-        self.post_completion()
 
-class Command3(StateNode):
+# Turn _ degrees to the _
+class Command2(Turn):
     def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 		
     def start(self, event=None):
-        super().start(event)
-        print("3")
-        self.post_completion()
+        angle, dir = int(info[0]), info[1]
 
-class Command4(StateNode):
-    def __init__(self, **kwargs):
-		super().__init__(**kwargs)
-		
-    def start(self, event=None):
+        if dir == "right":
+            angle = -angle
+        
+        self.angle = angle = Angle(degrees=angle)
         super().start(event)
-        print("4")
-        self.post_completion()
 
-class Command5(StateNode):
+
+# Pick up _
+class Command3(PickUpCube):
     def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 		
     def start(self, event=None):
+        if info[0] == "1":
+            self.object = cube1
+        elif info[0] == "2":
+            self.object = cube2
+        else:
+            self.object = cube3
+
         super().start(event)
-        print("5")
-        self.post_completion()
+
+
+# Go to _
+class Command4(PilotToObject):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        if info[0] == "1":
+            self.object = cube1
+        elif info[0] == "2":
+            self.object = cube2
+        else:
+            self.object = cube3
+
+        super().start(event)
+
+
+# Question about knowledge base
+class Command5(Say):
+    def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		
+    def start(self, event=None):
+        self.text = info[0]
+        super().start(event)
+
+
 
 class CozmoControl(StateMachineProgram):
     def __init__(self):
@@ -218,7 +244,7 @@ class CozmoControl(StateMachineProgram):
 
         execute5: Check5()
         execute5 =S=> Command5() =C=> loop
-        execute5 =F=> loop
+        execute5 =F=> Say("Could you be more clear?") =C=> loop
 	}
 
 
