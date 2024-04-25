@@ -132,6 +132,6 @@ class IntentClassifier():
 
     
   def setPremise(self, premise):
-      self.premise = "PREMISE" + "\n" + premise
+      self.premise = "This is the premise \n \n" + premise
 
         
